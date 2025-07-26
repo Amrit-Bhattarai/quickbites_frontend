@@ -4,7 +4,7 @@ import { Client } from "@stomp/stompjs";
 let stompClient = null;
 
 export const connectToKitchenSocket = (onMessageReceived) => {
-  const socket = new SockJS("https://519862b3b376.ngrok-free.app/ws");
+  const socket = new SockJS("http://localhost:8080/ws");
 
   stompClient = new Client({
     webSocketFactory: () => socket,

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { axiosWithRefresh } from "../../axiosWithRefresh";
 
 const BASE_IMAGE_URL =
-  "https://519862b3b376.ngrok-free.app/uploads/images/deliveryAgentImages/";
+  "http://localhost:8080/uploads/images/deliveryAgentImages/";
 
 const ApprovedDeliveryAgents = () => {
   const [agents, setAgents] = useState([]);

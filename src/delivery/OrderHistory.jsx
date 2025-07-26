@@ -1,32 +1,19 @@
 import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
-import { axiosWithRefresh } from "../axiosWithRefresh";
-=======
 import { axiosDelivery } from "../api/axiosDelivery";
->>>>>>> feat/delivery-api-helper
 
 const OrderHistory = () => {
   const [history, setHistory] = useState([]);
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-<<<<<<< HEAD
-        const res = await axiosWithRefresh({ method: "get", url: "/agent/history" });
-        if (res.data.status === "success" && res.data.data) {
-=======
         const res = await axiosDelivery({ method: "get", url: "/agent/history" });
         if (res.data && res.data.status === "success" && res.data.data) {
->>>>>>> feat/delivery-api-helper
           setHistory(res.data.data);
         }
       } catch (error) {
         console.error("Error fetching delivery history:", error);
       }
     };
-<<<<<<< HEAD
-
-=======
->>>>>>> feat/delivery-api-helper
     fetchHistory();
   }, []);
   return (

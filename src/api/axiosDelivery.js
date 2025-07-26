@@ -5,7 +5,7 @@ import axios from "axios";
 //   import { axiosDelivery } from "../api/axiosDelivery";
 //   const res = await axiosDelivery({ method: "get", url: "/agent/summary" });
 
-const BASE_URL = "https://519862b3b376.ngrok-free.app";
+const BASE_URL = "http://localhost:8080";
 
 export const axiosDelivery = async (config) => {
   const user = JSON.parse(localStorage.getItem("user"));

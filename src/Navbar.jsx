@@ -32,7 +32,7 @@ const Navbar = () => {
         if (!user?.accessToken) return;
 
         const res = await axios.get(
-          "https://5aeb0071168a.ngrok-free.app/api/v1/cart",
+          "http://localhost:8080/api/v1/cart",
           {
             headers: {
               Authorization: `Bearer ${user.accessToken}`,
@@ -108,7 +108,7 @@ const Navbar = () => {
       const user = JSON.parse(localStorage.getItem("user"));
       if (user?.accessToken) {
         await axios.post(
-          "https://519862b3b376.ngrok-free.app/api/v1/auth/logout",
+          "http://localhost:8080/api/v1/auth/logout",
           {},
           {
             headers: {

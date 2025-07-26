@@ -35,7 +35,7 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const BASE_URL = "https://519862b3b376.ngrok-free.app";
+const BASE_URL = "http://localhost:8080";
 const DELIVERY_FEE = 100;
 
 const RESTAURANT_COORDS = { lat: 27.6857, lng: 83.46525 };
@@ -608,7 +608,7 @@ const Cart = () => {
           console.warn("Invalid or empty delivery charge response:", data);
           const errMsg = "Unable to fetch delivery charge; using default fee";
           setDeliveryChargeError(errMsg);
-          toast.warn(
+          toast.error(
             `Using default delivery fee (Rs. ${DELIVERY_FEE}) due to server issue`
           );
           setDeliveryCharge(DELIVERY_FEE);
@@ -617,7 +617,7 @@ const Cart = () => {
         console.error("Error fetching delivery charge:", error);
         const errorMessage = error.message || "Error fetching delivery charge";
         setDeliveryChargeError(errorMessage);
-        toast.warn(
+        toast.error(
           `Using default delivery fee (Rs. ${DELIVERY_FEE}) due to server issue`
         );
         setDeliveryCharge(DELIVERY_FEE);

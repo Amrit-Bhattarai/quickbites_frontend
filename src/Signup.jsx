@@ -102,7 +102,7 @@ const Signup = () => {
     try {
       if (role === "customer") {
         const response = await axios.post(
-          "https://519862b3b376.ngrok-free.app/api/v1/auth/signup/customer",
+          "http://localhost:8080/api/v1/auth/signup/customer",
           data,
           { headers: { "Content-Type": "application/json" } }
         );
@@ -136,7 +136,7 @@ const Signup = () => {
         });
 
         const response = await axios.post(
-          "https://519862b3b376.ngrok-free.app/api/v1/auth/signup/agent",
+          "http://localhost:8080/api/v1/auth/signup/agent",
           formData
         );
 

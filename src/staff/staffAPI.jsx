@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "https://519862b3b376.ngrok-free.app/api/v1/staff";
-const AUTH_URL = "https://519862b3b376.ngrok-free.app/api/v1/auth";
+const BASE_URL = "http://localhost:8080/api/v1/staff";
+const AUTH_URL = "http://localhost:8080/api/v1/auth";
 
 export const getOrders = async () => {
   const res = await axios.get(`${BASE_URL}/orders`);

@@ -8,7 +8,7 @@ class WebSocketService {
   }
 
   connect(onConnectCallback) {
-    const socket = new SockJS("https://519862b3b376.ngrok-free.app/ws"); // Change to your WebSocket server URL
+    const socket = new SockJS("http://localhost:8080/ws"); // Change to your WebSocket server URL
 
     this.client = new Client({
       webSocketFactory: () => socket,

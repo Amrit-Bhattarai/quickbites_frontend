@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { axiosWithRefresh } from "../../axiosWithRefresh";
 
-const BASE_URL = "https://519862b3b376.ngrok-free.app";
+const BASE_URL = "http://localhost:8080";
 const IMAGE_BASE_URL = `${BASE_URL}/uploads/images/foodItemImages/`;
 
 const FoodList = () => {

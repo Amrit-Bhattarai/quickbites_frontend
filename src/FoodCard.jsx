@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useCartStore } from "./cartStore";
 import { toast } from "react-toastify";
 
-const BASE_URL = "https://519862b3b376.ngrok-free.app";
+const BASE_URL = "http://localhost:8080";
 
 const FoodCard = ({ food, onAddToCart }) => {
   const [selectedVariantId, setSelectedVariantId] = useState(

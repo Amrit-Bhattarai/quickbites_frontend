@@ -22,7 +22,7 @@ const OrdersPage = () => {
   const fetchOrders = async () => {
     try {
       const res = await axios.get(
-        "https://519862b3b376.ngrok-free.app/api/v1/orders",
+        "http://localhost:8080/api/v1/orders",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -85,7 +85,6 @@ const OrdersPage = () => {
       );
     }
   };
-
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
@@ -130,7 +129,6 @@ const OrdersPage = () => {
                 </h2>
                 {getStatusBadge(order.orderStatus)}
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 text-sm text-gray-700 mb-5">
                 <p>
                   <FaMoneyBillWave className="inline mr-2 text-gray-500" />

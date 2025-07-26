@@ -9,7 +9,8 @@ const AssignedOrders = () => {
         if (data.status === "success" && data.data) {
           setOrders(data.data);
         }
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error("Error fetching assigned orders:", error);
       });
   }, []);

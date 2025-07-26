@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import SearchBar from "./SearchBar";
 import CategorySection from "./CategorySection";
 
-const BASE_URL = "https://519862b3b376.ngrok-free.app";
+const BASE_URL = "http://localhost:8080";
 const MAX_VISIBLE_CATEGORIES = 8;
 
 const Menu = () => {

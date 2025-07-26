@@ -37,7 +37,7 @@ const Header = ({ className = "" }) => {
               onClick={async () => {
                 try {
                   await fetch(
-                    "https://519862b3b376.ngrok-free.app/api/v1/auth/logout",
+                    "http://localhost:8080/api/v1/auth/logout",
                     {
                       method: "POST",
                       credentials: "include",

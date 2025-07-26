@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useCartStore } from "./cartStore";
 import { toast } from "react-toastify";
 
-const BASE_URL = "https://519862b3b376.ngrok-free.app";
+const BASE_URL = "http://localhost:8080";
 const baseImageURL = `${BASE_URL}/uploads/images/foodItemImages/`;
 
 const SearchResultItem = ({ item, onAddToCart }) => {

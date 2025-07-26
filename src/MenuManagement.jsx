@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-const BASE_URL = "https://519862b3b376.ngrok-free.app";
+const BASE_URL = "http://localhost:8080";
 
 const MenuManagement = () => {
   const [items, setItems] = useState([]);

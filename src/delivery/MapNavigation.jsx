@@ -3,17 +3,6 @@ import RouteMap from "./RouteMap";
 import { axiosDelivery } from "../api/axiosDelivery";
 
 const MapNavigation = () => {
-<<<<<<< HEAD
-  // For demonstration, fetch start and end coordinates from /api/route
-  const [start, setStart] = React.useState(null);
-  const [end, setEnd] = React.useState(null);
-
-  React.useEffect(() => {
-    fetch("/api/route")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Fetched route data:", data);
-=======
   const [start, setStart] = useState(null);
   const [end, setEnd] = useState(null);
   useEffect(() => {
@@ -21,7 +10,6 @@ const MapNavigation = () => {
       try {
         const res = await axiosDelivery({ method: "get", url: "/api/route" });
         const data = res.data;
->>>>>>> feat/delivery-api-helper
         if (data && data.length >= 2) {
           setStart({ lat: data[0].lat, lon: data[0].lon });
           setEnd({ lat: data[1].lat, lon: data[1].lon });

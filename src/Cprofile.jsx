@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
 
-const BASE_URL = "https://519862b3b376.ngrok-free.app"; // Update if needed
+const BASE_URL = "http://localhost:8080"; // Update if needed
 
 const Cprofile = () => {
   const [formData, setFormData] = useState({
