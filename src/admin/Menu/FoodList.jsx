@@ -262,7 +262,7 @@ const FoodList = () => {
                   <tr key={food.id}>
                     <td className="px-6 py-4">
                       <img
-                        src={`${IMAGE_BASE_URL}${food.imageUrl}`}
+                        src={`${food.imageUrl}`}
                         alt={food.name}
                         className="h-16 w-16 object-cover rounded-md"
                         onError={(e) => {

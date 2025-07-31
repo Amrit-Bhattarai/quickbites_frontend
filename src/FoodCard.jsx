@@ -38,7 +38,7 @@ const FoodCard = ({ food, onAddToCart }) => {
       {/* Image Container with proper aspect ratio */}
       <div className="relative overflow-hidden bg-orange-50">
         <img
-          src={`${BASE_URL}/uploads/images/foodItemImages/${food.imageUrl}`}
+          src={`${food.imageUrl}`}
           alt={food.name}
           onError={(e) => {
             e.target.onerror = null;

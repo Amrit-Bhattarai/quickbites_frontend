@@ -222,7 +222,7 @@ const CategoryList = () => {
                   <tr key={cat.id}>
                     <td className="px-6 py-4">
                       <img
-                        src={`${IMAGE_BASE_URL}${cat.imageUrl}`}
+                        src={`${cat.imageUrl}`}
                         alt={cat.name}
                         className="h-16 w-16 object-cover rounded-md"
                       />

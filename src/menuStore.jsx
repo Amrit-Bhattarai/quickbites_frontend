@@ -13,6 +13,7 @@ export const useMenuStore = create(
           set({ cachedCategories: categories, cachedFoods: foods });
         }
       },
+      clearCachedData: () => set({ cachedCategories: [], cachedFoods: [] }), // Add this
     }),
     {
       name: "menu-cache", // key used in localStorage
