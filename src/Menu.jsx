@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import axios from "axios";
 import { useCartStore } from "./cartStore";
 import { useMenuStore } from "./menuStore";
@@ -7,7 +7,7 @@ import SearchBar from "./SearchBar";
 import CategorySection from "./CategorySection";
 
 const BASE_URL = "http://localhost:8080";
-const MAX_VISIBLE_CATEGORIES = 8;
+const MAX_VISIBLE_CATEGORIES = 7;
 
 const Menu = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,12 +17,13 @@ const Menu = () => {
   const [isError, setIsError] = useState(false);
 
   const { setCartFromBackend } = useCartStore();
-  const { cachedCategories, cachedFoods, setCachedData } = useMenuStore();
+  const { cachedCategories, cachedFoods, setCachedData } = useMenuStore(); //Import clearChache clear cache has created problem (rememeber or you might create again unnesesary function).
 
-  const [categories, setCategories] = useState(cachedCategories || []);
-  const [foods, setFoods] = useState(cachedFoods || []);
+  const [categories, setCategories] = useState([]); //Initilized for useEffect take
+  const [foods, setFoods] = useState([]); // Initiliazed for use effect.
 
-  // ✅ This checks if user is not logged in
+
+  // ✅ This checks if user is not logged in, (don't remember add or edit the old store local). this code is perfectly tested so keep (not modified as it said in your requiremetnts in any task).
   useEffect(() => {
     let toastShown = false;
 
@@ -33,18 +34,12 @@ const Menu = () => {
       toastShown = true;
     }
   }, []);
+  // ✅ This fetches the food data but, here after a succseful "change happens make the component be like what is not in there will never be
 
-  // ✅ This fetches the food data
   useEffect(() => {
     const fetchData = async () => {
-      if (cachedCategories.length > 0 && cachedFoods.length > 0) {
-        setIsLoading(false);
-        return;
-      }
-
       setIsLoading(true);
       setIsError(false);
-
       try {
         const [categoryRes, foodRes] = await Promise.all([
           axios.get(`${BASE_URL}/public/foodCategories`, {
@@ -54,10 +49,7 @@ const Menu = () => {
             headers: { "ngrok-skip-browser-warning": "true" },
           }),
         ]);
-
-        const categoriesData = Array.isArray(categoryRes.data)
-          ? categoryRes.data
-          : [];
+        const categoriesData = Array.isArray(categoryRes.data) ? categoryRes.data : [];
         const foodsData = Array.isArray(foodRes.data) ? foodRes.data : [];
 
         setCategories(categoriesData);
@@ -66,14 +58,20 @@ const Menu = () => {
       } catch (error) {
         console.error("Fetch error:", error.message);
         setIsError(true);
-        toast.error("Failed to fetch menu data.");
+        toast.error("Failed to fetch menu data, check API conenction and cors or others params if applies please.");
       } finally {
         setIsLoading(false);
       }
     };
+       const intervalId = setInterval(() => {
+      fetchData();
+    }, 30000); //Try
 
-    fetchData();
-  }, []);
+    fetchData(); //First and principal
+      return () => clearInterval(intervalId); // Avoid many intervas .Clean all.
+  }, [setCachedData]);// Setcahce for initial,
+
+  //All next is pure code :D, not cache for memory like store so refresh occurs without localStorge
 
   const handleAddToCart = async (food) => {
     const userData = localStorage.getItem("user");
@@ -101,13 +99,13 @@ const Menu = () => {
         {
           foodItemId: food.id,
           foodVariantId: food.selectedVariantId,
-          quantity: 1,
+          quantity: 1
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "ngrok-skip-browser-warning": "true",
-          },
+            "ngrok-skip-browser-warning": "true"
+          }
         }
       );
 
@@ -118,8 +116,8 @@ const Menu = () => {
         const cartRes = await axios.get(`${BASE_URL}/api/v1/cart`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            "ngrok-skip-browser-warning": "true",
-          },
+            "ngrok-skip-browser-warning": "true"
+          }
         });
 
         if (Array.isArray(cartRes.data.items)) {
@@ -133,9 +131,9 @@ const Menu = () => {
       toast.error("Error adding to cart");
     }
   };
+  //
   const filteredFoods = useMemo(() => {
     return foods.filter((food) => {
-      
       const foodCatId = food.category?.id?.toString?.();
       return (
         (activeCategoryId === "all" || foodCatId === activeCategoryId) &&
@@ -143,25 +141,24 @@ const Menu = () => {
       );
     });
   }, [foods, activeCategoryId, searchTerm]);
-
   const visibleCategories = categories.slice(0, MAX_VISIBLE_CATEGORIES);
   const moreCategories = categories.slice(MAX_VISIBLE_CATEGORIES);
+
+  //Last for create and never exist again the confusion from that Caching:
 
   return (
     <div className="bg-gradient-to-br from-orange-50 to-orange-100 min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-       
+        {/*Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-orange-800 mb-2">Our Menu</h1>
-          <p className="text-orange-600 text-lg">
-            Discover delicious dishes crafted with care
-          </p>
+          <p className="text-orange-600 text-lg">Discover delicious dishes crafted with care.</p>
         </div>
 
-        {/* Categories */}
+        {/*Catgories  */}
         {!isLoading && !isError && (
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 pb-6 mb-8">
-            {/* All button - bigger than others */}
+            {/*First Button that can apply */}
             <button
               onClick={() => setActiveCategoryId("all")}
               className={`px-6 py-3 text-base sm:text-lg font-bold rounded-full transition-all duration-300 whitespace-nowrap shadow-lg ${
@@ -172,8 +169,7 @@ const Menu = () => {
             >
               All
             </button>
-
-            {/* Category buttons */}
+            {/*Next all buttons avalibale */}
             {visibleCategories.map((cat) => (
               <button
                 key={cat.id}
@@ -187,9 +183,8 @@ const Menu = () => {
                 {cat.name}
               </button>
             ))}
-
-            {/* More dropdown */}
-            {moreCategories.length > 0 && (
+            {/*Button More to click after is clicked on it shows that component (never that type made code is so so long the lines but makes simple. :D). Remember can make buttons despars and that "last buttons in a very better with only logic". Now too so that's a fact so better so so :D*/
+            moreCategories.length > 0 && (
               <div className="relative">
                 <button
                   onClick={() => setMoreOpen(!moreOpen)}
@@ -222,17 +217,14 @@ const Menu = () => {
           </div>
         )}
 
-        {/* Search bar */}
+        {/*SearchBar section that has search component and allows find from all food elements by its values from that type of store  */}
         {!isLoading && !isError && (
           <div className="mb-8">
-            <SearchBar
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <SearchBar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         )}
 
-        {/* Content */}
+        {/*Content by it types "loading, empty list"  or Category */}
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-8">
             {Array.from({ length: 8 }).map((_, idx) => (
@@ -251,7 +243,7 @@ const Menu = () => {
           <div className="text-center text-red-600 mt-20 text-xl font-semibold bg-white rounded-2xl p-8 shadow-lg">
             ⚠️ No preview available.
             <br />
-            Please try again later.
+            Please try again later or check the API and if it working right .
           </div>
         ) : filteredFoods.length === 0 && searchTerm !== "" ? (
           <div className="flex flex-col items-center mt-20 text-orange-700 font-semibold text-lg bg-white rounded-2xl p-8 shadow-lg">
@@ -270,24 +262,18 @@ const Menu = () => {
               />
             </svg>
             <p>
-              No items found matching "<strong>{searchTerm}</strong>".
+              No items found matching "
+              <strong>{searchTerm}</strong>"
+              .
             </p>
             <p>Try different keywords or clear your search.</p>
-            <button
-              className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors duration-200"
-              onClick={() => setSearchTerm("")}
-            >
-              Clear Search
-            </button>
           </div>
         ) : (
-          <CategorySection
+          <CategorySection // Finally will use to the component category
             category={
               activeCategoryId === "all"
                 ? { name: "All Categories", id: "all", imageUrl: "" }
-                : categories.find(
-                    (cat) => cat.id.toString() === activeCategoryId
-                  )
+                : categories.find((cat) => cat.id.toString() === activeCategoryId)
             }
             items={filteredFoods}
             onAddToCart={handleAddToCart}
@@ -297,5 +283,5 @@ const Menu = () => {
     </div>
   );
 };
-
+//Now export to app
 export default Menu;

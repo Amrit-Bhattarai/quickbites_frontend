@@ -45,15 +45,24 @@ const baseSchema = z.object({
 });
 
 const deliverySchema = baseSchema.extend({
-  citizenshipPhoto: z
+  citizenshipPhotoFront: z
     .any()
-    .refine((file) => file?.length === 1, "Front side is required."),
+    .refine(
+      (file) => file instanceof FileList && file.length > 0,
+      "Front side is required."
+    ),
   citizenshipPhotoBack: z
     .any()
-    .refine((file) => file?.length === 1, "Back side is required."),
+    .refine(
+      (file) => file instanceof FileList && file.length > 0,
+      "Back side is required."
+    ),
   drivingLicense: z
     .any()
-    .refine((file) => file?.length === 1, "Driving license is required."),
+    .refine(
+      (file) => file instanceof FileList && file.length > 0,
+      "Driving license is required."
+    ),
 });
 
 const Signup = () => {
@@ -72,7 +81,7 @@ const Signup = () => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
-    mode: "onBlur",
+    mode: "onSubmit",
   });
 
   useEffect(() => {
@@ -123,7 +132,7 @@ const Signup = () => {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
           if (
-            key === "citizenshipPhoto" ||
+            key === "citizenshipPhotoFront" ||
             key === "citizenshipPhotoBack" ||
             key === "drivingLicense"
           ) {
@@ -323,13 +332,13 @@ const Signup = () => {
                 <Label label="Citizenship Photo (Front)" required />
                 <input
                   type="file"
-                  {...register("citizenshipPhoto")}
+                  {...register("citizenshipPhotoFront")}
                   accept="image/*"
                   className="w-full p-2 border border-gray-300 rounded-md bg-white"
                 />
-                {errors.citizenshipPhoto && (
+                {errors.citizenshipPhotoFront && (
                   <p className="text-xs text-red-500">
-                    {errors.citizenshipPhoto.message}
+                    {errors.citizenshipPhotoFront.message}
                   </p>
                 )}
               </div>

@@ -56,8 +56,12 @@ const StaffDashboard = () => {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      await updateKitchenStatus(orderId, newStatus);
+      const res = await updateKitchenStatus(orderId, newStatus);
       fetchOrders();
+      // If status is READY and backend returns agent info, show notification
+      if (newStatus === "READY" && res && res.assignedAgent) {
+        alert(`Order assigned to agent: ${res.assignedAgent.name || res.assignedAgent.id}`);
+      }
     } catch (err) {
       alert("❌ Failed to update status.");
     }
