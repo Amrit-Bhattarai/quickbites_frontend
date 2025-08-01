@@ -1,10 +1,13 @@
 import React, { useState, useRef } from "react";
 import { axiosWithRefresh } from "../../axiosWithRefresh";
+import { useMenuStore } from "../../menuStore";
 
 const AddCategory = () => {
+  const { clearCachedData } = useMenuStore();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState(null);
+  const [isActive, setIsActive] = useState(true); // New state for isActive
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const fileInputRef = useRef();
@@ -23,8 +26,9 @@ const AddCategory = () => {
     try {
       const formData = new FormData();
       formData.append("name", name);
-      formData.append("description", description); // ✅ Added
+      formData.append("description", description);
       formData.append("image", image);
+      formData.append("isActive", isActive); // send isActive as string (boolean)
 
       const res = await axiosWithRefresh({
         method: "post",
@@ -34,9 +38,11 @@ const AddCategory = () => {
       });
 
       setMessage("✅ Category added successfully!");
+      clearCachedData();
       setName("");
-      setDescription(""); // ✅ Reset description
+      setDescription("");
       setImage(null);
+      setIsActive(true);
       if (fileInputRef.current) fileInputRef.current.value = null;
     } catch (err) {
       const backendMsg = err?.response?.data?.message;
@@ -83,7 +89,6 @@ const AddCategory = () => {
           />
         </div>
 
-        {/* ✅ New Description Field */}
         <div>
           <label
             htmlFor="description"
@@ -138,6 +143,7 @@ const AddCategory = () => {
                     accept="image/*"
                     onChange={(e) => setImage(e.target.files[0])}
                     ref={fileInputRef}
+                    required
                   />
                 </label>
                 <p className="pl-1">or drag and drop</p>
@@ -157,6 +163,18 @@ const AddCategory = () => {
               )}
             </div>
           </div>
+        </div>
+
+        <div>
+          <label className="inline-flex items-center">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={() => setIsActive(!isActive)}
+              className="form-checkbox h-5 w-5 text-orange-600"
+            />
+            <span className="ml-2 text-gray-700">Active</span>
+          </label>
         </div>
 
         <div className="flex justify-end">

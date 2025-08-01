@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-// Import BASE_URL from axiosWithRefresh
 import { axiosWithRefresh } from "../../axiosWithRefresh";
 
-// Use the same BASE_URL as in axiosWithRefresh.jsx
 const BASE_URL = "http://localhost:8080";
 const IMAGE_BASE_URL = `${BASE_URL}/uploads/images/foodCategoryImages/`;
 
@@ -76,7 +74,8 @@ const CategoryList = () => {
       formData.append("name", editForm.name);
       formData.append("description", editForm.description);
       if (editForm.image) formData.append("image", editForm.image);
-      formData.append("active", editForm.active);
+      // active must be string "true" or "false"
+      formData.append("active", editForm.active ? "true" : "false");
 
       await axiosWithRefresh({
         method: "put",
@@ -148,126 +147,132 @@ const CategoryList = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {categories.map((cat) =>
-                editingId === cat.id ? (
-                  <tr key={cat.id + "-edit"}>
-                    <td className="px-6 py-4">
-                      <img
-                        src={
-                          editForm.image
-                            ? URL.createObjectURL(editForm.image)
-                            : `${IMAGE_BASE_URL}${editForm.imageUrl}`
-                        }
-                        alt="Preview"
-                        className="h-16 w-16 object-cover rounded-md"
-                      />
-                      <input
-                        type="file"
-                        name="image"
-                        accept="image/*"
-                        onChange={handleChange}
-                        className="mt-2"
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <input
-                        type="text"
-                        name="name"
-                        value={editForm.name}
-                        onChange={handleChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <textarea
-                        name="description"
-                        value={editForm.description}
-                        onChange={handleChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        name="active"
-                        checked={editForm.active}
-                        onChange={handleChange}
-                      />
-                      <span
-                        className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          editForm.active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {editForm.active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                      <button
-                        onClick={saveEdits}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={cancelEditing}
-                        className="text-gray-500 hover:text-gray-700 ml-4"
-                      >
-                        Cancel
-                      </button>
-                    </td>
-                  </tr>
-                ) : (
-                  <tr key={cat.id}>
-                    <td className="px-6 py-4">
-                      <img
-                        src={`${cat.imageUrl}`}
-                        alt={cat.name}
-                        className="h-16 w-16 object-cover rounded-md"
-                      />
-                    </td>
-                    <td className="px-6 py-4">{cat.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
-                      {cat.description}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        onClick={() => toggleStatus(cat.id, cat.active)}
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full cursor-pointer ${
-                          cat.active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {cat.active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => startEditing(cat)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(cat.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
+              {categories.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-4 text-gray-500">
+                    No categories found.
+                  </td>
+                </tr>
+              ) : (
+                categories.map((cat) =>
+                  editingId === cat.id ? (
+                    <tr key={cat.id + "-edit"}>
+                      <td className="px-6 py-4">
+                        <img
+                          src={
+                            editForm.image
+                              ? URL.createObjectURL(editForm.image)
+                              : `${IMAGE_BASE_URL}${editForm.imageUrl}`
+                          }
+                          alt="Preview"
+                          className="h-16 w-16 object-cover rounded-md"
+                        />
+                        <input
+                          type="file"
+                          name="image"
+                          accept="image/*"
+                          onChange={handleChange}
+                          className="mt-2"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <input
+                          type="text"
+                          name="name"
+                          value={editForm.name}
+                          onChange={handleChange}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <textarea
+                          name="description"
+                          value={editForm.description}
+                          onChange={handleChange}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          name="active"
+                          checked={editForm.active}
+                          onChange={handleChange}
+                        />
+                        <span
+                          className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            editForm.active
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}>
+                          {editForm.active ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
+                        <button
+                          onClick={saveEdits}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEditing}
+                          className="text-gray-500 hover:text-gray-700 ml-4"
+                        >
+                          Cancel
+                        </button>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={cat.id}>
+                      <td className="px-6 py-4">
+
+<img
+  src={cat.imageUrl}
+  alt={cat.name}
+  className="h-16 w-16 object-cover rounded-md"
+  onError={(e) => {
+    e.target.onerror = null;
+    e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
+  }}
+/>
+                      </td>
+                      <td className="px-6 py-4">{cat.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {cat.description}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          onClick={() => toggleStatus(cat.id, cat.active)}
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full cursor-pointer ${
+                            cat.active
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {cat.active ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => startEditing(cat)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(cat.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  )
                 )
               )}
             </tbody>
           </table>
-
-          {categories.length === 0 && (
-            <p className="text-center py-4 text-gray-500">
-              No categories found.
-            </p>
-          )}
         </div>
       )}
     </div>

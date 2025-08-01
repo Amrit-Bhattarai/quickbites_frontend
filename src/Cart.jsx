@@ -25,6 +25,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+// Fix for Leaflet's default icon path issue with bundlers like Webpack
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -36,10 +37,8 @@ L.Icon.Default.mergeOptions({
 });
 
 const BASE_URL = "http://localhost:8080";
-const DELIVERY_FEE = 100;
-
 const RESTAURANT_COORDS = { lat: 27.6857, lng: 83.46525 };
-const DELIVERY_RADIUS_METERS = 10000; // 18km
+const DELIVERY_RADIUS_METERS = 18000; // 18km, as mentioned in the modal tooltip
 
 function haversineDistance(lat1, lon1, lat2, lon2) {
   // Returns distance in meters
@@ -64,7 +63,6 @@ const MapSelectionModal = ({ isOpen, onClose, onConfirm }) => {
   const [distance, setDistance] = useState(null);
   const [showTooltip, setShowTooltip] = useState(false);
 
-  // Update distance when position changes
   useEffect(() => {
     if (position) {
       const d = haversineDistance(
@@ -546,33 +544,43 @@ const Cart = () => {
   }, [view]);
 
   useEffect(() => {
+    if (view !== "checkout") return;
+
     const fetchDeliveryCharge = async () => {
       if (!selectedAddressId) {
         setDeliveryCharge(null);
+        setDeliveryChargeError(null);
+        setDeliveryChargeLoading(false);
         return;
       }
+
       const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
       if (!selectedAddress) {
         setDeliveryCharge(null);
+        setDeliveryChargeError("Selected address not found.");
+        setDeliveryChargeLoading(false);
         return;
       }
+
       if (
         typeof selectedAddress.latitude !== "number" ||
-        typeof selectedAddress.longitude !== "number" ||
-        isNaN(selectedAddress.latitude) ||
-        isNaN(selectedAddress.longitude)
+        typeof selectedAddress.longitude !== "number"
       ) {
-        const errMsg = "Invalid latitude or longitude for selected address";
+        const errMsg = "Invalid coordinates for the selected address.";
         setDeliveryChargeError(errMsg);
+        setDeliveryCharge(null);
+        setDeliveryChargeLoading(false);
         toast.error(errMsg);
-        setDeliveryCharge(DELIVERY_FEE);
         return;
       }
+
       setDeliveryChargeLoading(true);
       setDeliveryChargeError(null);
+      setDeliveryCharge(null);
+
       try {
         const user = JSON.parse(localStorage.getItem("user"));
-        const res = await fetch(BASE_URL + "/api/v1/orders/deliveryCharge", {
+        const res = await fetch(`${BASE_URL}/api/v1/orders/deliveryCharge`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -586,47 +594,27 @@ const Cart = () => {
             lon: selectedAddress.longitude,
           }),
         });
+
+       const data = await res.json();
         if (!res.ok) {
-          const errorText = await res.text();
-          console.error("Delivery charge fetch failed:", {
-            status: res.status,
-            statusText: res.statusText,
-            errorText,
-          });
-          throw new Error("Failed to fetch delivery charge: " + errorText);
+          throw new Error(data.message || "Failed to fetch delivery charge.");
         }
-        const data = await res.json();
-        console.log("Delivery charge response:", data);
-        if (
-          typeof data.deliveryCharge === "number" ||
-          (typeof data.deliveryCharge === "string" &&
-            !isNaN(Number(data.deliveryCharge)) &&
-            data.deliveryCharge.trim() !== "")
-        ) {
-          setDeliveryCharge(Number(data.deliveryCharge));
-        } else {
-          console.warn("Invalid or empty delivery charge response:", data);
-          const errMsg = "Unable to fetch delivery charge; using default fee";
-          setDeliveryChargeError(errMsg);
-          toast.error(
-            `Using default delivery fee (Rs. ${DELIVERY_FEE}) due to server issue`
-          );
-          setDeliveryCharge(DELIVERY_FEE);
-        }
+        const deliveryChargeValue = Number(data) || 0;
+        setDeliveryCharge(deliveryChargeValue);
+        setDeliveryChargeError(null);
       } catch (error) {
         console.error("Error fetching delivery charge:", error);
-        const errorMessage = error.message || "Error fetching delivery charge";
-        setDeliveryChargeError(errorMessage);
-        toast.error(
-          `Using default delivery fee (Rs. ${DELIVERY_FEE}) due to server issue`
+        setDeliveryChargeError(
+          error.message || "Could not fetch delivery charge."
         );
-        setDeliveryCharge(DELIVERY_FEE);
+        setDeliveryCharge(null);
       } finally {
         setDeliveryChargeLoading(false);
       }
     };
+
     fetchDeliveryCharge();
-  }, [selectedAddressId, addresses]);
+  }, [selectedAddressId, addresses, view]);
 
   const total = useMemo(
     () => cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
@@ -657,10 +645,14 @@ const Cart = () => {
       } else {
         if (increment && item.quantity >= 10) {
           toast.error("Cannot add more than 10 units.", { icon: null });
+          setModifyingItemId(null);
           return;
         }
         const newQuantity = increment ? item.quantity + 1 : item.quantity - 1;
-        if (newQuantity < 1) return;
+        if (newQuantity < 1) {
+          setModifyingItemId(null);
+          return;
+        }
         const res = await fetch(`${BASE_URL}/api/v1/cart/update`, {
           method: "PUT",
           headers: {
@@ -750,10 +742,9 @@ const Cart = () => {
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to delete address.");
       }
-
       setAddresses((prev) => prev.filter((addr) => addr.id !== idToDelete));
       if (selectedAddressId === idToDelete) {
-        setSelectedAddressId(null);
+        setSelectedAddressId(addresses.length > 1 ? addresses[0].id : null);
       }
       toast.success("Address removed");
     } catch (error) {
@@ -764,6 +755,7 @@ const Cart = () => {
     }
   };
 
+  // ========== START: MODIFIED CODE ==========
   const handlePlaceOrder = async () => {
     if (!selectedAddressId) {
       toast.error("Please select a delivery address.");
@@ -798,7 +790,7 @@ const Cart = () => {
         locationInfo: {
           latitude: selectedAddress.latitude,
           longitude: selectedAddress.longitude,
-          deliveryAddress: selectedAddress.address,
+          deliveryAddress: selectedAddress.fullAddress, // Using fullAddress from your state
         },
         addressId: selectedAddressId,
         paymentMethod: paymentMethod === "cod" ? "COD" : "STRIPE",
@@ -819,34 +811,25 @@ const Cart = () => {
       if (!res.ok) {
         throw new Error(data.message || "Failed to place order.");
       }
-      if (paymentMethod === "cod") {
-        try {
-          await fetch(`${BASE_URL}/api/v1/cart/clear`, {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${user.accessToken}`,
-              "ngrok-skip-browser-warning": "true",
-            },
-          });
-        } catch (clearError) {
-          console.error("Failed to clear backend cart after COD:", clearError);
-        }
-      } else if (paymentMethod === "stripe" && data.clientSecret) {
-        try {
-          await fetch(`${BASE_URL}/api/v1/cart/clear`, {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${user.accessToken}`,
-              "ngrok-skip-browser-warning": "true",
-            },
-          });
-        } catch (clearError) {
-          console.error(
-            "Failed to clear backend cart after Stripe:",
-            clearError
-          );
-        }
 
+      // Handle cart clearing post-order based on payment method
+      if (paymentMethod === "cod") {
+        toast.success("Order placed successfully! Redirecting..."); // Success toast for COD
+        clearCart(); // Clear local state immediately for instant UI update
+        navigate("/success"); // Navigate to success page for COD
+        // Clear backend cart in the background (fire and forget)
+        fetch(`${BASE_URL}/api/v1/cart/clear`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${user.accessToken}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+        }).catch((err) =>
+          console.error("Failed to clear backend cart after COD:", err)
+        );
+      } else if (paymentMethod === "stripe" && data.clientSecret) {
+        // For Stripe, clear the local cart for an optimistic UI update before redirecting.
+        // Your backend should handle clearing the cart permanently via a webhook after successful payment.
         clearCart();
         window.location.href = data.clientSecret;
       } else {
@@ -855,11 +838,12 @@ const Cart = () => {
     } catch (error) {
       console.error("Error placing order:", error);
       toast.error(error.message || "Could not place order.");
-      navigate("/failure");
     } finally {
       setPlacingOrder(false);
     }
   };
+  // ========== END: MODIFIED CODE ==========
+
 
   if (isCartLoading) {
     return (
@@ -873,10 +857,21 @@ const Cart = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <h2 className="font-serif text-2xl font-semibold text-orange-800">
-          Your cart is empty!
-        </h2>
+      <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="font-serif text-3xl font-semibold text-orange-800">
+            Your cart is empty!
+          </h2>
+          <p className="mt-2 text-gray-500">
+            Looks like you haven't added anything to your cart yet.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="mt-6 rounded-md bg-orange-500 px-6 py-2 font-semibold text-white transition hover:bg-orange-600"
+          >
+            Start Shopping
+          </button>
+        </div>
         <Toaster />
       </div>
     );
@@ -902,7 +897,7 @@ const Cart = () => {
               >
                 <div className="flex items-center gap-4">
                   <img
-                    src={`${BASE_URL}/uploads/images/foodItemImages/${item.imageUrl}`}
+                    src={`${item.imageUrl}`}
                     alt={item.foodName}
                     className="h-20 w-20 rounded-md object-cover"
                   />
@@ -920,22 +915,28 @@ const Cart = () => {
                   <button
                     disabled={modifyingItemId === item.id}
                     onClick={() => modifyCartItem(item, false)}
-                    className="rounded-full bg-orange-100 p-2 text-orange-600 transition hover:bg-orange-200"
+                    className="rounded-full bg-orange-100 p-2 text-orange-600 transition hover:bg-orange-200 disabled:opacity-50"
                   >
                     <FiMinus />
                   </button>
-                  <span className="text-lg">{item.quantity}</span>
+                  <span className="w-8 text-center text-lg">
+                    {modifyingItemId === item.id ? (
+                      <FiLoader className="mx-auto animate-spin" />
+                    ) : (
+                      item.quantity
+                    )}
+                  </span>
                   <button
                     disabled={modifyingItemId === item.id}
                     onClick={() => modifyCartItem(item, true)}
-                    className="rounded-full bg-orange-100 p-2 text-orange-600 transition hover:bg-orange-200"
+                    className="rounded-full bg-orange-100 p-2 text-orange-600 transition hover:bg-orange-200 disabled:opacity-50"
                   >
                     <FiPlus />
                   </button>
                   <button
                     disabled={modifyingItemId === item.id}
                     onClick={() => modifyCartItem(item, true, true)}
-                    className="rounded-full p-2 text-red-500 transition hover:bg-red-100"
+                    className="rounded-full p-2 text-red-500 transition hover:bg-red-100 disabled:opacity-50"
                   >
                     <FiTrash2 />
                   </button>
@@ -955,7 +956,7 @@ const Cart = () => {
               <button
                 disabled={clearingCart}
                 onClick={clearCartHandler}
-                className="ml-4 rounded-md bg-red-500 px-4 py-2 font-semibold text-white transition hover:bg-red-600"
+                className="ml-4 rounded-md bg-red-500 px-4 py-2 font-semibold text-white transition hover:bg-red-600 disabled:bg-red-300"
               >
                 {clearingCart ? "Clearing..." : "Clear Cart"}
               </button>
@@ -998,12 +999,13 @@ const Cart = () => {
                       className={`relative cursor-pointer rounded-lg border p-4 transition-all ${
                         selectedAddressId === addr.id
                           ? "border-orange-500 ring-2 ring-orange-200"
-                          : "border-gray-200"
+                          : "border-gray-200 hover:border-gray-400"
                       }`}
                     >
-                      <h3 className="pr-16 text-lg font-bold">{addr.title}</h3>
-                      <p className="mt-2 text-gray-600">{addr.address}</p>
-                      <p className="mt-1 text-sm text-gray-500">{addr.phone}</p>
+                      <h3 className="pr-16 text-lg font-bold">
+                        {addr.title}
+                      </h3>
+                      <p className="mt-2 text-gray-600">{addr.fullAddress}</p>
                       <div className="absolute top-3 right-3 flex items-center gap-2">
                         {selectedAddressId === addr.id && (
                           <FiCheckCircle
@@ -1028,7 +1030,7 @@ const Cart = () => {
                       </div>
                     </div>
                   ))}
-                  {addresses.length < 2 && (
+                  {addresses.length < 5 && ( // Limit number of addresses user can add
                     <div
                       onClick={() => setAddAddressModalOpen(true)}
                       className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition-all hover:border-orange-400 hover:bg-orange-50"
@@ -1057,10 +1059,10 @@ const Cart = () => {
                     className={`relative flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-all ${
                       paymentMethod === "cod"
                         ? "border-orange-500 ring-2 ring-orange-200"
-                        : "border-gray-200"
+                        : "border-gray-200 hover:border-gray-400"
                     }`}
                   >
-                    <span className="h-6 w-6 flex items-center justify-center text-green-500 font-bold text-lg">
+                    <span className="flex h-6 w-6 items-center justify-center text-lg font-bold text-green-500">
                       Rs.
                     </span>
                     <div>
@@ -1081,7 +1083,7 @@ const Cart = () => {
                     className={`relative flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-all ${
                       paymentMethod === "stripe"
                         ? "border-orange-500 ring-2 ring-orange-200"
-                        : "border-gray-200"
+                        : "border-gray-200 hover:border-gray-400"
                     }`}
                   >
                     <FiCreditCard className="h-6 w-6 text-indigo-500" />
@@ -1110,7 +1112,9 @@ const Cart = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold">QuickBites</h3>
-                    <p className="text-sm text-gray-500">MilankChowk, Butwal</p>
+                    <p className="text-sm text-gray-500">
+                      Milanchowk, Butwal
+                    </p>
                   </div>
                 </div>
                 {cart.map((item) => (
@@ -1120,7 +1124,7 @@ const Cart = () => {
                   >
                     <div className="flex items-center gap-2">
                       <img
-                        src={`${BASE_URL}/uploads/images/foodItemImages/${item.imageUrl}`}
+                        src={`${item.imageUrl}`}
                         alt={item.foodName}
                         className="h-8 w-8 rounded object-cover"
                       />
@@ -1143,18 +1147,15 @@ const Cart = () => {
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <p>Delivery Fee</p>
-                    <p>
-                      Rs.{" "}
+                    <p className="text-right font-medium">
                       {deliveryChargeLoading ? (
-                        "Loading..."
+                        <span className="text-sm text-gray-500">Calculating...</span>
                       ) : deliveryChargeError ? (
-                        <span className="text-yellow-600">
-                          {DELIVERY_FEE} <small>(Default)</small>
-                        </span>
-                      ) : deliveryCharge !== null ? (
-                        deliveryCharge
+                        <span className="max-w-[150px] text-xs text-red-500">{deliveryChargeError}</span>
+                      ) : !isNaN(deliveryCharge) ? (
+                        `Rs. ${deliveryCharge}`
                       ) : (
-                        DELIVERY_FEE
+                        "Rs. 0" // Fallback
                       )}
                     </p>
                   </div>
@@ -1162,20 +1163,19 @@ const Cart = () => {
                   <div className="flex justify-between text-lg font-bold">
                     <p>To Pay</p>
                     <p>
-                      Rs.{" "}
-                      {deliveryChargeLoading
-                        ? "Loading..."
-                        : deliveryChargeError
-                        ? total + DELIVERY_FEE
-                        : deliveryCharge !== null
-                        ? total + deliveryCharge
-                        : total + DELIVERY_FEE}
+                      {deliveryChargeLoading ? (
+                        "..."
+                      ) : deliveryChargeError ? (
+                        `Rs. ${total}` // Show just total if error
+                      ) : (
+                        `Rs. ${total + deliveryCharge}`
+                      )}
                     </p>
                   </div>
                 </div>
                 <div className="mt-6">
                   <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1">
+                    <label className="mb-1 block text-sm font-medium">
                       Phone Number <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -1184,20 +1184,22 @@ const Cart = () => {
                       onChange={(e) => {
                         setCheckoutPhone(e.target.value);
                         const v = e.target.value;
-                        if (!/^(98|97)\d{8}$/.test(v))
+                        if (!/^(98|97)\d{8}$/.test(v) && v) {
                           setCheckoutPhoneError(
-                            "Must be 10 digits starting with 98/97."
+                            "Must be 10 digits starting with 98 or 97."
                           );
-                        else setCheckoutPhoneError("");
+                        } else {
+                          setCheckoutPhoneError("");
+                        }
                       }}
                       placeholder="e.g., 98XXXXXXXX"
-                      className={`w-full rounded-lg border p-3 focus:ring-2 focus:ring-orange-300 transition ${
+                      className={`w-full rounded-lg border p-3 transition focus:ring-2 focus:ring-orange-300 ${
                         checkoutPhoneError
                           ? "border-red-500"
                           : "border-gray-200"
                       }`}
                     />
-                    <small className="text-red-500">{checkoutPhoneError}</small>
+                    {checkoutPhoneError && <small className="text-red-500">{checkoutPhoneError}</small>}
                   </div>
                   <div className="relative flex items-center">
                     <FiMessageSquare
@@ -1219,7 +1221,9 @@ const Cart = () => {
                     !selectedAddressId ||
                     placingOrder ||
                     !checkoutPhone ||
-                    !!checkoutPhoneError
+                    !!checkoutPhoneError ||
+                    deliveryChargeLoading ||
+                    !!deliveryChargeError
                   }
                   className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 py-3 font-bold text-white transition-all hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-300"
                 >

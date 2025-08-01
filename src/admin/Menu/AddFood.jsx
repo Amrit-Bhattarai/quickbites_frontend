@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { axiosWithRefresh } from "../../axiosWithRefresh";
+import { useMenuStore } from "../../menuStore";
 
 const AddFood = () => {
+  const { clearCachedData } = useMenuStore();
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -11,9 +13,9 @@ const AddFood = () => {
     categoryId: "",
     image: null,
   });
-
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -23,7 +25,6 @@ const AddFood = () => {
           url: "/public/foodCategories",
         });
 
-        // Backend might wrap data differently, yo chai tapai ko backend anusaar adjust garnu
         setCategories(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error("Failed to fetch categories:", err);
@@ -60,11 +61,11 @@ const AddFood = () => {
     try {
       const formData = new FormData();
       formData.append("name", form.name);
-      formData.append("price", form.price);
+      formData.append("price", Number(form.price)); // convert to number
       formData.append("description", form.description);
-      formData.append("categoryId", form.categoryId);
+      formData.append("categoryId", Number(form.categoryId)); // convert to int
       formData.append("image", form.image);
-      formData.append("isActive", "true");
+      formData.append("isActive", "true"); // API expects string "true"
 
       await axiosWithRefresh({
         method: "post",
@@ -74,6 +75,7 @@ const AddFood = () => {
       });
 
       toast.success("✅ Food item added successfully!");
+      clearCachedData();
 
       setForm({
         name: "",
@@ -82,6 +84,8 @@ const AddFood = () => {
         categoryId: "",
         image: null,
       });
+
+      if (fileInputRef.current) fileInputRef.current.value = null;
     } catch (err) {
       console.error("Add food error:", err);
       toast.error("❌ Failed to add food item.");
@@ -218,6 +222,7 @@ const AddFood = () => {
                     onChange={handleChange}
                     className="sr-only"
                     required
+                    ref={fileInputRef}
                   />
                 </label>
               </div>
